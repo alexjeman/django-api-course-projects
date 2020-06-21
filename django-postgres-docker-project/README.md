@@ -1,3 +1,9 @@
+## How to run Django and postgreSQL with docker
+
+## 1. Create docker file
+```
+""" Dockerfile """
+
 FROM python:3.8
 
 # Install missing libs
@@ -46,3 +52,68 @@ ENV GUNICORN_WORKERS_CONNECTIONS 1001
 # Running Python Application
 # CMD python manage.py runserver 0.0.0.0:8000
 # CMD gunicorn --workers=${GUNICORN_WORKERS} config.wsgi:application -b ${GUNICORN_BIND} --log-level info
+
+```
+
+## 2. Create docker-compose.yaml file
+```
+""" docker-compose.yaml """
+
+version: '3.8'
+
+services:
+  web:
+    build: .
+    command: python manage.py runserver 0.0.0.0:8000
+    ports:
+      - 8000:8000
+    depends_on:
+      - db
+  db:
+    image: postgres:11
+    environment:
+      POSTGRES_DB: "db"
+      POSTGRES_PASSWORD: "postgres"
+
+```
+
+## 3. Set postgreSQL backend connection in Django settings.py file
+```
+""" settings.py """
+
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'postgres',
+        'USER': 'postgres',
+        'PASSWORD': 'postgres',
+        'HOST': 'db',
+        'PORT': 5432
+    }
+}
+```
+
+## 4. Build and run docker containers (web and db)
+```
+$ docker-compose build
+$ docker-compose run
+```
+
+## 4. Run django makemigrations and migrate commands
+```
+$ docker-compose exec web python manage.py makemigrations
+
+$ docker-compose exec web python manage.py migrate
+```
+
+## 5. Run django createsuperuser command
+```
+$ docker-compose exec web python manage.py createsuperuser
+```
+
+## 6. Visit api endpoint http://127.0.0.1:8000/api/v1/
+
+## 7. Check logs
+```
+$ docker-compose logs
+```
